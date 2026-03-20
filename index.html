@@ -1,1 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logística Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .detail-grid { display: none; }
+        .expanded .detail-grid { display: grid; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8">
 
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-2xl font-bold text-slate-800 mb-6">Consulta de Pesagens</h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Data Trabalho</label>
+                    <input type="date" id="filterDate" class="w-full border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none border">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Transportador</label>
+                    <input type="text" id="filterTransp" placeholder="Nome do transportador..." class="w-full border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none border">
+                </div>
+            </div>
+        </header>
+
+        <div id="loading" class="text-center text-slate-500 mt-10">Carregando dados...</div>
+        <div id="container" class="space-y-4"></div>
+    </div>
+
+    <script>
+        // COLE AQUI O URL DO SEU APPS SCRIPT
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzb_O51vJKi0IlbakbbIucQRknv1wb0c-1w4EfV8olXKR5D4QiBDnhN2MGZfnRsxw/exec';
+        
+        let allData = [];
+
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL);
+                allData = await response.json();
+                renderData(allData);
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                document.getElementById('loading').innerText = "Erro ao carregar dados. Verifique a permissão do link.";
+            }
+        }
+
+        function renderData(data) {
+            const container = document.getElementById('container');
+            container.innerHTML = '';
+
+            // Ordenação: Data + Hora Chegada (Descendente)
+            const sorted = data.sort((a, b) => {
+                const dateTimeA = new Date(`${a['Data Trabalho']} ${a['Lista Talões Pesagem.Hora Chegada']}`);
+                const dateTimeB = new Date(`${b['Data Trabalho']} ${b['Lista Talões Pesagem.Hora Chegada']}`);
+                return dateTimeB - dateTimeA;
+            });
+
+            sorted.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden cursor-pointer hover:border-blue-300 transition-all";
+                card.onclick = () => card.classList.toggle('expanded');
+                
+                card.innerHTML = `
+                    <div class="p-5 flex flex-col md:flex-row justify-between gap-4">
+                        <div class="flex-1">
+                            <div class="text-[10px] font-mono text-slate-400 mb-1 uppercase">Doc: ${item['N.º Documento Externo']} | ID: ${item['N.º']}</div>
+                            <div class="font-bold text-slate-800 text-lg uppercase">${item['Nome Local Entidade']}</div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 text-sm">
+                            <span class="bg-slate-100 px-3 py-1 rounded text-slate-600">${item['Data Trabalho']}</span>
+                            <span class="font-medium text-slate-700 underline decoration-blue-200">${item['Lista Talões Pesagem.Nome Transporador']}</span>
+                            <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-bold">${item['Lista Talões Pesagem.Hora Chegada']}</span>
+                        </div>
+                    </div>
+                    <div class="detail-grid p-5 bg-slate-50 border-t border-slate-100 grid-cols-2 md:grid-cols-3 gap-6">
+                        ${createDetail("Matrícula", item['Lista Talões Pesagem.Matricula Veiculo'])}
+                        ${createDetail("Reboque", item['Lista Talões Pesagem.Matricula Reboque'])}
+                        ${createDetail("Aut. Entrada", item['Lista Talões Pesagem.Hora Autorização Entrada'])}
+                        ${createDetail("Pesagem Ent.", item['Lista Talões Pesagem.Hora Pesagem Entrada'])}
+                        ${createDetail("Pesagem Saída", item['Lista Talões Pesagem.Hora Pesagem Saída'])}
+                        ${createDetail("Hora Partida", item['Lista Talões Pesagem.Hora Partida'])}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function createDetail(label, value) {
+            return `<div><p class="text-[10px] text-slate-400 uppercase font-bold">${label}</p><p class="text-sm font-semibold">${value || '---'}</p></div>`;
+        }
+
+        // Filtros em tempo real
+        const filterEvents = () => {
+            const dValue = document.getElementById('filterDate').value;
+            const tValue = document.getElementById('filterTransp').value.toLowerCase();
+
+            const filtered = allData.filter(item => {
+                const dateMatch = dValue ? item['Data Trabalho'].includes(dValue) : true;
+                const transpMatch = tValue ? item['Lista Talões Pesagem.Nome Transporador'].toLowerCase().includes(tValue) : true;
+                return dateMatch && transpMatch;
+            });
+            renderData(filtered);
+        };
+
+        document.getElementById('filterDate').addEventListener('input', filterEvents);
+        document.getElementById('filterTransp').addEventListener('input', filterEvents);
+
+        fetchData();
+    </script>
+</body>
+</html>
