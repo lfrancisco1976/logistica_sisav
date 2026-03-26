@@ -3,218 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão Logística Mobile</title>
+    <title>Logística Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/dist/css/all.min.css">
     <style>
-        .loader { border-top-color: #3498db; animation: spinner 1.5s linear infinite; }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .active-tab { color: #2563eb; border-top: 2px solid #2563eb; }
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen pb-20">
+<body class="bg-slate-50 min-h-screen pb-24 font-sans">
 
-    <header class="bg-white shadow-sm p-4 sticky top-0 z-40">
-        <h1 class="text-center text-blue-600 font-bold text-lg uppercase tracking-wider">Sistema de Cargas</h1>
+    <header class="bg-white p-4 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-md mx-auto space-y-3">
+            <h1 class="text-center text-slate-800 font-black text-xl tracking-tight">GESTÃO DE CARGAS</h1>
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
+                <input type="text" id="filtro-geral" placeholder="Filtrar por data (dd/mm/aaaa)..." 
+                       class="w-full bg-slate-100 border-none rounded-2xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                       oninput="filtrarCards()">
+            </div>
+        </div>
     </header>
 
     <main class="p-4 max-w-md mx-auto">
-        
-        <section id="page-disponiveis">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-gray-600 font-semibold italic text-sm">Disponíveis (Folha 1)</h2>
-                <button onclick="carregarDados()" class="text-blue-500 text-xs"><i class="fas fa-sync"></i> Atualizar</button>
-            </div>
-            <div id="lista-cards" class="space-y-4">
-                <div class="flex justify-center p-10"><div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div></div>
+        <section id="aba-disponiveis">
+            <div id="lista-disponiveis" class="space-y-4">
+                <div class="text-center py-10 text-slate-400 text-sm">A carregar serviços...</div>
             </div>
         </section>
 
-        <section id="page-agenda" class="hidden">
-            <h2 class="text-gray-600 font-semibold italic text-sm mb-4 text-center">Cronograma de Cargas (Folha 2)</h2>
-            <div id="lista-agenda" class="space-y-3">
-                </div>
+        <section id="aba-agenda" class="hidden">
+            <div id="lista-agenda" class="space-y-3"></div>
         </section>
     </main>
 
-    <div id="modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
-            <div class="flex justify-between items-start mb-4">
-                <h3 class="font-bold text-xl text-slate-800">Agendar Serviço</h3>
-                <button onclick="closeModal()" class="text-gray-400 text-xl">&times;</button>
+    <div id="modal-agendamento" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-end sm:items-center justify-center z-[100]">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 animate-in slide-in-from-bottom duration-300">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold text-slate-800">Programar Horário</h3>
+                <button onclick="fecharModal()" class="text-slate-400 text-2xl">&times;</button>
             </div>
             
-            <div class="space-y-4 text-sm text-gray-600 mb-6 bg-blue-50 p-3 rounded-lg" id="modal-detalhes">
-                </div>
+            <div id="modal-info" class="mb-6 p-4 bg-blue-50 rounded-2xl text-sm text-blue-800 border border-blue-100"></div>
 
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Data da Marcação</label>
-                    <input type="date" id="input-data" class="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-blue-500 outline-none transition-all">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Data da Marcação</label>
+                    <input type="date" id="input-data" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Hora (Janelas de 1h)</label>
-                    <select id="input-hora" class="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-blue-500 outline-none transition-all">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Janela de 1 Hora</label>
+                    <select id="input-hora" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
                         </select>
                 </div>
-                <button onclick="enviarMarcacao()" id="btn-confirmar" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-95">
-                    Confirmar Agendamento
+                <button onclick="salvarMarcacao()" id="btn-save" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform">
+                    Confirmar Marcação
                 </button>
             </div>
         </div>
     </div>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-3 flex justify-around items-center z-40">
-        <button onclick="showPage('disponiveis')" id="nav-disp" class="flex flex-col items-center text-blue-600">
-            <i class="fas fa-th-large text-xl"></i>
-            <span class="text-[10px] mt-1 font-bold uppercase">Disponíveis</span>
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around items-center h-20 z-50">
+        <button onclick="mudarAba('disponiveis')" id="nav-disponiveis" class="flex flex-col items-center gap-1 transition-colors active-tab">
+            <i class="fas fa-boxes-stacked text-xl"></i>
+            <span class="text-[10px] font-bold uppercase">Disponíveis</span>
         </button>
-        <button onclick="showPage('agenda')" id="nav-agen" class="flex flex-col items-center text-gray-400">
+        <button onclick="mudarAba('agenda')" id="nav-agenda" class="flex flex-col items-center gap-1 text-slate-400 transition-colors">
             <i class="fas fa-calendar-check text-xl"></i>
-            <span class="text-[10px] mt-1 font-bold uppercase">Agenda</span>
+            <span class="text-[10px] font-bold uppercase">Agenda</span>
         </button>
     </nav>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzk8XtXL8bJnPQ1q7aI6UKTSVoTxfRn7gB2Whx32DgsO4r8MXuQY7XgFxKBZdQHkqof/exec";
-        let servicoSelecionado = null;
-        let baseDadosFolha2 = [];
+        const API = "https://script.google.com/macros/s/AKfycbzev4peCOh5EPTY9mX-aqPOVOPkzStJWUClCqZIlIN3UNkWJnppXq_yYCQIcsBiqXzX/exec";
+        let dbDisponiveis = [];
+        let dbAgenda = [];
+        let itemAtual = null;
 
-        // Inicialização
+        // Inicializar
         window.onload = () => {
+            gerarOpcoesHora();
             carregarDados();
-            popularHoras();
         };
 
-        function showPage(page) {
-            document.getElementById('page-disponiveis').classList.toggle('hidden', page !== 'disponiveis');
-            document.getElementById('page-agenda').classList.toggle('hidden', page !== 'agenda');
-            
-            // Estilo dos ícones
-            document.getElementById('nav-disp').classList.toggle('text-blue-600', page === 'disponiveis');
-            document.getElementById('nav-disp').classList.toggle('text-gray-400', page !== 'disponiveis');
-            document.getElementById('nav-agen').classList.toggle('text-blue-600', page === 'agenda');
-            document.getElementById('nav-agen').classList.toggle('text-gray-400', page !== 'agenda');
-            
-            if(page === 'agenda') carregarAgenda();
+        function gerarOpcoesHora() {
+            const select = document.getElementById('input-hora');
+            for(let i=7; i<=20; i++) {
+                let h = i < 10 ? `0${i}:00` : `${i}:00`;
+                select.innerHTML += `<option value="${h}">${h}</option>`;
+            }
         }
 
         async function carregarDados() {
-            const container = document.getElementById('lista-cards');
             try {
-                const response = await fetch(`${API_URL}?action=getFolha1`);
-                const data = await response.json();
-                
-                container.innerHTML = data.map(item => `
-                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group">
-                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-md uppercase">${item.idDoc}</span>
-                            <span class="text-gray-400 text-xs"><i class="far fa-calendar-alt mr-1"></i>${item.dataTrabalho}</span>
-                        </div>
-                        <h4 class="font-bold text-slate-800 mb-1">${item.local}</h4>
-                        <p class="text-xs text-gray-500 mb-4 uppercase tracking-tighter">IE: ${item.idIE}</p>
-                        <button onclick='openModal(${JSON.stringify(item)})' class="w-full bg-slate-800 text-white text-sm font-semibold py-2 rounded-xl active:bg-blue-600">
-                            Programar Marcação
-                        </button>
-                    </div>
-                `).join('');
+                const [res1, res2] = await Promise.all([
+                    fetch(`${API}?action=getFolha1`),
+                    fetch(`${API}?action=getFolha2`)
+                ]);
+                dbDisponiveis = await res1.json();
+                dbAgenda = await res2.json();
+                filtrarCards();
             } catch (e) {
-                container.innerHTML = `<p class="text-red-500 text-center">Erro ao carregar dados. Verifique a API.</p>`;
+                console.error("Erro na API", e);
             }
         }
 
-        function popularHoras() {
-            const select = document.getElementById('input-hora');
-            for(let h=7; h<=20; h++) {
-                let hora = h < 10 ? `0${h}:00` : `${h}:00`;
-                select.innerHTML += `<option value="${hora}">${hora}</option>`;
-            }
+        function filtrarCards() {
+            const busca = document.getElementById('filtro-geral').value.toLowerCase();
+            
+            // Render Disponíveis
+            const filteredDisp = dbDisponiveis.filter(i => i.dataTrabalho.toLowerCase().includes(busca));
+            document.getElementById('lista-disponiveis').innerHTML = filteredDisp.map(item => `
+                <div class="bg-white rounded-2xl p-4 card-shadow border-l-4 border-blue-500">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded font-bold">${item.idDoc}</span>
+                        <span class="text-[10px] text-slate-400 font-medium tracking-tight"><i class="far fa-calendar mr-1"></i>${item.dataTrabalho}</span>
+                    </div>
+                    <h4 class="font-bold text-slate-800 leading-tight mb-4">${item.local}</h4>
+                    <button onclick='abrirModal(${JSON.stringify(item)})' class="w-full bg-slate-800 text-white text-xs font-bold py-3 rounded-xl active:bg-blue-600 transition-colors">
+                        AGENDAR CARGA
+                    </button>
+                </div>
+            `).join('');
+
+            // Render Agenda
+            const filteredAgen = dbAgenda.filter(i => i.dataMarcacao.toLowerCase().includes(busca));
+            document.getElementById('lista-agenda').innerHTML = filteredAgen.map(item => `
+                <div class="bg-white rounded-2xl p-4 card-shadow border-l-4 border-emerald-500">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="text-xl font-black text-slate-800">${item.horaMarcacao}</span>
+                            <span class="text-[10px] block text-emerald-600 font-bold uppercase">${item.dataMarcacao}</span>
+                        </div>
+                        <div class="flex gap-4">
+                            <button onclick="removerRegistro('${item.rowId}')" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-50">
+                        <p class="text-xs font-bold text-slate-700 uppercase">${item.local}</p>
+                        <p class="text-[10px] text-slate-400">Doc: ${item.idDoc} | IE: ${item.idIE}</p>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function openModal(item) {
-            servicoSelecionado = item;
-            document.getElementById('modal-detalhes').innerHTML = `
-                <p><strong>Doc:</strong> ${item.idDoc}</p>
-                <p><strong>Local:</strong> ${item.local}</p>
-            `;
-            document.getElementById('modal').classList.remove('hidden');
+        function abrirModal(item) {
+            itemAtual = item;
+            document.getElementById('modal-info').innerHTML = `<strong>${item.local}</strong><br>Documento: ${item.idDoc}`;
+            document.getElementById('modal-agendamento').classList.remove('hidden');
         }
 
-        function closeModal() {
-            document.getElementById('modal').classList.add('hidden');
+        function fecharModal() {
+            document.getElementById('modal-agendamento').classList.add('hidden');
+            itemAtual = null;
         }
 
-        async function enviarMarcacao() {
+        async function salvarMarcacao() {
             const dataM = document.getElementById('input-data').value;
             const horaM = document.getElementById('input-hora').value;
-
-            if(!dataM) return alert("Selecione uma data");
-
-            // Lógica de alerta de sobreposição (exemplo local)
-            const alerta = confirm(`Confirma marcação para ${dataM} às ${horaM}? \n(O sistema verificará sobreposições na Folha 2)`);
             
-            if(alerta) {
-                const btn = document.getElementById('btn-confirmar');
-                btn.disabled = true;
-                btn.innerText = "A processar...";
+            if(!dataM) return alert("Por favor, selecione a data.");
 
-                const payload = {
-                    ...servicoSelecionado,
-                    dataMarcacao: dataM,
-                    horaMarcacao: horaM
-                };
+            // Alerta de sobreposição simplificado
+            const conflito = dbAgenda.some(a => a.dataMarcacao === dataM && a.horaMarcacao === horaM);
+            if(conflito && !confirm("Já existe uma carga neste horário. Pretende forçar a sobreposição?")) return;
 
-                try {
-                    await fetch(API_URL, {
-                        method: 'POST',
-                        mode: 'no-cors', // Necessário para Google Apps Script simples
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    alert("Pedido enviado! (Nota: O Google Sheets processará o registo em segundos)");
-                    closeModal();
-                    showPage('agenda');
-                } catch (e) {
-                    alert("Erro ao gravar. Tente novamente.");
-                } finally {
-                    btn.disabled = false;
-                    btn.innerText = "Confirmar Agendamento";
-                }
+            const btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> A gravar...';
+
+            const payload = { ...itemAtual, dataMarcacao: dataM, horaMarcacao: horaM };
+
+            try {
+                await fetch(API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+                alert("Marcação realizada com sucesso!");
+                fecharModal();
+                carregarDados();
+                mudarAba('agenda');
+            } catch (e) {
+                alert("Erro ao gravar. Tente novamente.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "Confirmar Marcação";
             }
         }
 
-        async function carregarAgenda() {
-            const container = document.getElementById('lista-agenda');
-            container.innerHTML = '<div class="text-center p-10 text-gray-400 text-xs">A carregar cronograma...</div>';
-            
-            try {
-                const response = await fetch(`${API_URL}?action=getFolha2`);
-                const data = await response.json();
-                
-                if(data.length === 0) {
-                    container.innerHTML = '<p class="text-center text-gray-400 mt-10">Nenhum serviço agendado.</p>';
-                    return;
-                }
+        async function removerRegistro(rowId) {
+            if(!confirm("Tem a certeza que deseja eliminar esta marcação?")) return;
+            await fetch(`${API}?action=delete&rowId=${rowId}`);
+            carregarDados();
+        }
 
-                container.innerHTML = data.map(item => `
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-l-4 border-l-emerald-400 flex justify-between items-center">
-                        <div>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-lg font-black text-slate-800">${item.horaMarcacao}</span>
-                                <span class="text-[10px] bg-emerald-50 text-emerald-700 px-2 rounded-full font-bold">${item.dataMarcacao}</span>
-                            </div>
-                            <p class="text-xs font-bold text-slate-700 uppercase">${item.local}</p>
-                            <p class="text-[10px] text-gray-400 uppercase">Doc: ${item.idDoc} | IE: ${item.idIE}</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button class="text-gray-300 hover:text-blue-500 p-2"><i class="fas fa-edit"></i></button>
-                            <button class="text-gray-300 hover:text-red-500 p-2"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (e) {
-                container.innerHTML = `<p class="text-red-500 text-center">Erro ao carregar agenda.</p>`;
-            }
+        function mudarAba(aba) {
+            document.getElementById('aba-disponiveis').classList.toggle('hidden', aba !== 'disponiveis');
+            document.getElementById('aba-agenda').classList.toggle('hidden', aba !== 'agenda');
+            document.getElementById('nav-disponiveis').classList.toggle('active-tab', aba === 'disponiveis');
+            document.getElementById('nav-agenda').classList.toggle('active-tab', aba === 'agenda');
+            document.getElementById('nav-disponiveis').classList.toggle('text-slate-400', aba !== 'disponiveis');
+            document.getElementById('nav-agenda').classList.toggle('text-slate-400', aba !== 'agenda');
         }
     </script>
 </body>
