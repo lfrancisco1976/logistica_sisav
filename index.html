@@ -3,204 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logística Pro</title>
+    <title>Logística Pro - V3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/dist/css/all.min.css">
     <style>
-        .active-tab { color: #2563eb; border-top: 2px solid #2563eb; }
-        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .active-tab { color: #2563eb; border-bottom: 3px solid #2563eb; }
+        input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen pb-24 font-sans">
+<body class="bg-slate-50 min-h-screen pb-28 font-sans">
 
     <header class="bg-white p-4 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-md mx-auto space-y-3">
-            <h1 class="text-center text-slate-800 font-black text-xl tracking-tight">GESTÃO DE CARGAS</h1>
-            <div class="relative">
-                <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
-                <input type="text" id="filtro-geral" placeholder="Filtrar por data (dd/mm/aaaa)..." 
-                       class="w-full bg-slate-100 border-none rounded-2xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                       oninput="filtrarCards()">
+        <div class="max-w-md mx-auto">
+            <h1 class="text-center text-slate-800 font-black text-lg tracking-tight mb-3">SISTEMA DE CARGAS</h1>
+            <div class="flex items-center gap-2 bg-slate-100 p-2 rounded-xl border border-slate-200">
+                <i class="fas fa-calendar-day text-slate-400 ml-2"></i>
+                <input type="date" id="filtro-calendario" 
+                       class="bg-transparent text-sm w-full outline-none font-semibold text-slate-700"
+                       onchange="filtrarPorData()">
+                <button onclick="limparFiltro()" class="text-xs text-blue-600 font-bold px-2">Limpar</button>
             </div>
         </div>
     </header>
 
     <main class="p-4 max-w-md mx-auto">
         <section id="aba-disponiveis">
+            <h2 class="text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-widest">Serviços Disponíveis (Folha 1)</h2>
             <div id="lista-disponiveis" class="space-y-4">
-                <div class="text-center py-10 text-slate-400 text-sm">A carregar serviços...</div>
+                <div class="text-center py-10"><i class="fas fa-circle-notch animate-spin text-blue-500 text-2xl"></i></div>
             </div>
         </section>
 
         <section id="aba-agenda" class="hidden">
+            <h2 class="text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-widest">Cronograma Agendado (Folha 2)</h2>
             <div id="lista-agenda" class="space-y-3"></div>
         </section>
     </main>
 
-    <div id="modal-agendamento" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-end sm:items-center justify-center z-[100]">
-        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 animate-in slide-in-from-bottom duration-300">
+    <div id="modal-agendamento" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-[100] p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-bold text-slate-800">Programar Horário</h3>
-                <button onclick="fecharModal()" class="text-slate-400 text-2xl">&times;</button>
+                <h3 class="text-lg font-bold text-slate-800">Programar Carga</h3>
+                <button onclick="fecharModal()" class="text-slate-300 text-3xl">&times;</button>
             </div>
             
-            <div id="modal-info" class="mb-6 p-4 bg-blue-50 rounded-2xl text-sm text-blue-800 border border-blue-100"></div>
+            <div id="modal-info" class="mb-6 p-4 bg-slate-50 rounded-2xl text-xs text-slate-600 border border-slate-100 leading-relaxed"></div>
 
-            <div class="space-y-4">
+            <div class="space-y-5">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Data da Marcação</label>
-                    <input type="date" id="input-data" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-wider">Data da Marcação</label>
+                    <input type="date" id="input-data-marcacao" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-medium">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Janela de 1 Hora</label>
-                    <select id="input-hora" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-wider">Hora (Janela 1h)</label>
+                    <select id="input-hora-marcacao" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-medium">
                         </select>
                 </div>
-                <button onclick="salvarMarcacao()" id="btn-save" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform">
-                    Confirmar Marcação
+                <button onclick="enviarParaSheet()" id="btn-save" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 active:scale-95 transition-all">
+                    CONFIRMAR AGENDAMENTO
                 </button>
             </div>
         </div>
     </div>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around items-center h-20 z-50">
-        <button onclick="mudarAba('disponiveis')" id="nav-disponiveis" class="flex flex-col items-center gap-1 transition-colors active-tab">
-            <i class="fas fa-boxes-stacked text-xl"></i>
-            <span class="text-[10px] font-bold uppercase">Disponíveis</span>
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around items-center h-20 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
+        <button onclick="mudarAba('disponiveis')" id="nav-disponiveis" class="flex flex-col items-center gap-1 active-tab w-1/2 transition-all">
+            <i class="fas fa-list-ul text-lg"></i>
+            <span class="text-[10px] font-black uppercase">Disponíveis</span>
         </button>
-        <button onclick="mudarAba('agenda')" id="nav-agenda" class="flex flex-col items-center gap-1 text-slate-400 transition-colors">
-            <i class="fas fa-calendar-check text-xl"></i>
-            <span class="text-[10px] font-bold uppercase">Agenda</span>
+        <button onclick="mudarAba('agenda')" id="nav-agenda" class="flex flex-col items-center gap-1 text-slate-300 w-1/2 transition-all">
+            <i class="fas fa-calendar-check text-lg"></i>
+            <span class="text-[10px] font-black uppercase">Agenda</span>
         </button>
     </nav>
 
     <script>
         const API = "https://script.google.com/macros/s/AKfycbzev4peCOh5EPTY9mX-aqPOVOPkzStJWUClCqZIlIN3UNkWJnppXq_yYCQIcsBiqXzX/exec";
-        let dbDisponiveis = [];
-        let dbAgenda = [];
-        let itemAtual = null;
+        let dbDisp = [];
+        let dbAgen = [];
+        let selecionado = null;
 
-        // Inicializar
         window.onload = () => {
-            gerarOpcoesHora();
+            popularHoras();
             carregarDados();
         };
 
-        function gerarOpcoesHora() {
-            const select = document.getElementById('input-hora');
+        // Formatação de data rigorosa para evitar o erro ISO
+        function formatarDataPT(stringData) {
+            if (!stringData) return "";
+            const d = new Date(stringData);
+            if (isNaN(d)) return stringData;
+            const dia = String(d.getUTCDate()).padStart(2, '0');
+            const mes = String(d.getUTCMonth() + 1).padStart(2, '0');
+            const ano = d.getUTCFullYear();
+            return `${dia}/${mes}/${ano}`;
+        }
+
+        function popularHoras() {
+            const s = document.getElementById('input-hora-marcacao');
             for(let i=7; i<=20; i++) {
                 let h = i < 10 ? `0${i}:00` : `${i}:00`;
-                select.innerHTML += `<option value="${h}">${h}</option>`;
+                s.innerHTML += `<option value="${h}">${h}</option>`;
             }
         }
 
         async function carregarDados() {
             try {
-                const [res1, res2] = await Promise.all([
-                    fetch(`${API}?action=getFolha1`),
-                    fetch(`${API}?action=getFolha2`)
+                const [r1, r2] = await Promise.all([
+                    fetch(`${API}?action=getFolha1`).then(r => r.json()),
+                    fetch(`${API}?action=getFolha2`).then(r => r.json())
                 ]);
-                dbDisponiveis = await res1.json();
-                dbAgenda = await res2.json();
-                filtrarCards();
-            } catch (e) {
-                console.error("Erro na API", e);
-            }
+                dbDisp = r1; dbAgen = r2;
+                renderizarCards();
+            } catch (e) { console.error("Erro API:", e); }
         }
 
-        function filtrarCards() {
-            const busca = document.getElementById('filtro-geral').value.toLowerCase();
-            
-            // Render Disponíveis
-            const filteredDisp = dbDisponiveis.filter(i => i.dataTrabalho.toLowerCase().includes(busca));
-            document.getElementById('lista-disponiveis').innerHTML = filteredDisp.map(item => `
-                <div class="bg-white rounded-2xl p-4 card-shadow border-l-4 border-blue-500">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded font-bold">${item.idDoc}</span>
-                        <span class="text-[10px] text-slate-400 font-medium tracking-tight"><i class="far fa-calendar mr-1"></i>${item.dataTrabalho}</span>
+        function renderizarCards() {
+            const filtro = document.getElementById('filtro-calendario').value;
+            const dataFiltroPT = filtro ? formatarDataPT(filtro) : "";
+
+            // Filtro e Render Disponíveis
+            const fDisp = dataFiltroPT ? dbDisp.filter(i => formatarDataPT(i.dataTrabalho) === dataFiltroPT) : dbDisp;
+            document.getElementById('lista-disponiveis').innerHTML = fDisp.map(item => `
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-center mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                        <span>Doc: ${item.idDoc}</span>
+                        <span>${formatarDataPT(item.dataTrabalho)}</span>
                     </div>
-                    <h4 class="font-bold text-slate-800 leading-tight mb-4">${item.local}</h4>
-                    <button onclick='abrirModal(${JSON.stringify(item)})' class="w-full bg-slate-800 text-white text-xs font-bold py-3 rounded-xl active:bg-blue-600 transition-colors">
-                        AGENDAR CARGA
-                    </button>
+                    <h4 class="font-bold text-slate-800 mb-4">${item.local}</h4>
+                    <button onclick='abrirModal(${JSON.stringify(item)})' class="w-full bg-blue-600 text-white text-xs font-bold py-3 rounded-xl shadow-md shadow-blue-100 active:bg-blue-700">PROGRAMAR</button>
                 </div>
             `).join('');
 
-            // Render Agenda
-            const filteredAgen = dbAgenda.filter(i => i.dataMarcacao.toLowerCase().includes(busca));
-            document.getElementById('lista-agenda').innerHTML = filteredAgen.map(item => `
-                <div class="bg-white rounded-2xl p-4 card-shadow border-l-4 border-emerald-500">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <span class="text-xl font-black text-slate-800">${item.horaMarcacao}</span>
-                            <span class="text-[10px] block text-emerald-600 font-bold uppercase">${item.dataMarcacao}</span>
+            // Filtro e Render Agenda
+            const fAgen = dataFiltroPT ? dbAgen.filter(i => formatarDataPT(i.dataMarcacao) === dataFiltroPT) : dbAgen;
+            fAgen.sort((a,b) => a.horaMarcacao.localeCompare(b.horaMarcacao));
+            document.getElementById('lista-agenda').innerHTML = fAgen.map(item => `
+                <div class="bg-white rounded-2xl p-4 shadow-sm border-l-4 border-emerald-500 flex justify-between items-center">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-lg font-black text-slate-800">${item.horaMarcacao}</span>
+                            <span class="text-[10px] font-bold text-emerald-600 uppercase">${formatarDataPT(item.dataMarcacao)}</span>
                         </div>
-                        <div class="flex gap-4">
-                            <button onclick="removerRegistro('${item.rowId}')" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
-                        </div>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase">${item.local}</p>
                     </div>
-                    <div class="mt-3 pt-3 border-t border-slate-50">
-                        <p class="text-xs font-bold text-slate-700 uppercase">${item.local}</p>
-                        <p class="text-[10px] text-slate-400">Doc: ${item.idDoc} | IE: ${item.idIE}</p>
+                    <div class="flex gap-4">
+                        <button onclick="apagarLinha('${item.rowId}')" class="text-slate-300 hover:text-red-500 p-2"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `).join('');
         }
 
         function abrirModal(item) {
-            itemAtual = item;
-            document.getElementById('modal-info').innerHTML = `<strong>${item.local}</strong><br>Documento: ${item.idDoc}`;
+            selecionado = item;
+            document.getElementById('modal-info').innerHTML = `<strong>LOCAL:</strong> ${item.local}<br><strong>DOC:</strong> ${item.idDoc}`;
             document.getElementById('modal-agendamento').classList.remove('hidden');
         }
 
         function fecharModal() {
             document.getElementById('modal-agendamento').classList.add('hidden');
-            itemAtual = null;
         }
 
-        async function salvarMarcacao() {
-            const dataM = document.getElementById('input-data').value;
-            const horaM = document.getElementById('input-hora').value;
-            
-            if(!dataM) return alert("Por favor, selecione a data.");
+        async function enviarParaSheet() {
+            const dM = document.getElementById('input-data-marcacao').value;
+            const hM = document.getElementById('input-hora-marcacao').value;
+            if(!dM) return alert("Selecione uma data");
 
-            // Alerta de sobreposição simplificado
-            const conflito = dbAgenda.some(a => a.dataMarcacao === dataM && a.horaMarcacao === horaM);
-            if(conflito && !confirm("Já existe uma carga neste horário. Pretende forçar a sobreposição?")) return;
+            // Alerta de sobreposição
+            const dataM_PT = formatarDataPT(dM);
+            const conflito = dbAgen.some(a => formatarDataPT(a.dataMarcacao) === dataM_PT && a.horaMarcacao === hM);
+            if(conflito && !confirm("Já existe marcação neste horário. Pretende forçar?")) return;
 
             const btn = document.getElementById('btn-save');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> A gravar...';
+            btn.disabled = true; btn.innerText = "A GRAVAR...";
 
-            const payload = { ...itemAtual, dataMarcacao: dataM, horaMarcacao: horaM };
+            const payload = { 
+                idDoc: selecionado.idDoc, 
+                idIE: selecionado.idIE, 
+                dataTrabalho: formatarDataPT(selecionado.dataTrabalho), 
+                local: selecionado.local, 
+                dataMarcacao: dataM_PT, 
+                horaMarcacao: hM 
+            };
 
+            // Envio POST para o Apps Script
             try {
                 await fetch(API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                alert("Marcação realizada com sucesso!");
+                alert("Marcação enviada!");
                 fecharModal();
-                carregarDados();
+                setTimeout(carregarDados, 1500); // Aguarda o Sheet processar
                 mudarAba('agenda');
-            } catch (e) {
-                alert("Erro ao gravar. Tente novamente.");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = "Confirmar Marcação";
-            }
+            } catch (e) { alert("Erro ao ligar à Sheet"); }
+            finally { btn.disabled = false; btn.innerText = "CONFIRMAR AGENDAMENTO"; }
         }
 
-        async function removerRegistro(rowId) {
-            if(!confirm("Tem a certeza que deseja eliminar esta marcação?")) return;
+        async function apagarLinha(rowId) {
+            if(!confirm("Eliminar este agendamento?")) return;
             await fetch(`${API}?action=delete&rowId=${rowId}`);
             carregarDados();
         }
+
+        function filtrarPorData() { renderizarCards(); }
+        function limparFiltro() { document.getElementById('filtro-calendario').value = ""; renderizarCards(); }
 
         function mudarAba(aba) {
             document.getElementById('aba-disponiveis').classList.toggle('hidden', aba !== 'disponiveis');
             document.getElementById('aba-agenda').classList.toggle('hidden', aba !== 'agenda');
             document.getElementById('nav-disponiveis').classList.toggle('active-tab', aba === 'disponiveis');
             document.getElementById('nav-agenda').classList.toggle('active-tab', aba === 'agenda');
-            document.getElementById('nav-disponiveis').classList.toggle('text-slate-400', aba !== 'disponiveis');
-            document.getElementById('nav-agenda').classList.toggle('text-slate-400', aba !== 'agenda');
+            document.getElementById('nav-disponiveis').classList.toggle('text-slate-300', aba !== 'disponiveis');
+            document.getElementById('nav-agenda').classList.toggle('text-slate-300', aba !== 'agenda');
         }
     </script>
 </body>
