@@ -3,81 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Cargas</title>
+    <title>Gestão Logística Mobile</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/dist/css/all.min.css">
+    <style>
+        .loader { border-top-color: #3498db; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans">
+<body class="bg-slate-50 min-h-screen pb-20">
 
-    <nav class="bg-blue-600 text-white p-4 sticky top-0 z-50 shadow-md">
-        <div class="flex justify-around max-w-md mx-auto">
-            <button onclick="showPage('disponiveis')" class="flex flex-col items-center">
-                <i class="fas fa-list"></i><span class="text-xs">Disponíveis</span>
-            </button>
-            <button onclick="showPage('agenda')" class="flex flex-col items-center">
-                <i class="fas fa-calendar-alt"></i><span class="text-xs">Agenda</span>
-            </button>
-        </div>
-    </nav>
+    <header class="bg-white shadow-sm p-4 sticky top-0 z-40">
+        <h1 class="text-center text-blue-600 font-bold text-lg uppercase tracking-wider">Sistema de Cargas</h1>
+    </header>
 
-    <main class="p-4 max-w-md mx-auto pb-20">
+    <main class="p-4 max-w-md mx-auto">
         
         <section id="page-disponiveis">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">Serviços por Processar</h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-gray-600 font-semibold italic text-sm">Disponíveis (Folha 1)</h2>
+                <button onclick="carregarDados()" class="text-blue-500 text-xs"><i class="fas fa-sync"></i> Atualizar</button>
+            </div>
             <div id="lista-cards" class="space-y-4">
-                <div class="animate-pulse bg-gray-200 h-32 rounded-xl"></div>
+                <div class="flex justify-center p-10"><div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div></div>
             </div>
         </section>
 
         <section id="page-agenda" class="hidden">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">Cargas Agendadas</h2>
-            <div id="lista-agenda" class="space-y-3"></div>
+            <h2 class="text-gray-600 font-semibold italic text-sm mb-4 text-center">Cronograma de Cargas (Folha 2)</h2>
+            <div id="lista-agenda" class="space-y-3">
+                </div>
         </section>
     </main>
 
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-[60]">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-sm">
-            <h3 class="text-lg font-bold mb-4 text-blue-600">Programar Marcação</h3>
-            <label class="block text-sm mb-1">Data</label>
-            <input type="date" id="input-data" class="w-full border p-2 rounded mb-3">
-            <label class="block text-sm mb-1">Hora (07:00 - 20:00)</label>
-            <select id="input-hora" class="w-full border p-2 rounded mb-4">
-                </select>
-            <div class="flex gap-2">
-                <button onclick="closeModal()" class="flex-1 py-2 bg-gray-200 rounded-lg">Cancelar</button>
-                <button onclick="confirmarAgendamento()" class="flex-1 py-2 bg-blue-600 text-white rounded-lg">Confirmar</button>
+    <div id="modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="font-bold text-xl text-slate-800">Agendar Serviço</h3>
+                <button onclick="closeModal()" class="text-gray-400 text-xl">&times;</button>
+            </div>
+            
+            <div class="space-y-4 text-sm text-gray-600 mb-6 bg-blue-50 p-3 rounded-lg" id="modal-detalhes">
+                </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Data da Marcação</label>
+                    <input type="date" id="input-data" class="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-blue-500 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Hora (Janelas de 1h)</label>
+                    <select id="input-hora" class="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-blue-500 outline-none transition-all">
+                        </select>
+                </div>
+                <button onclick="enviarMarcacao()" id="btn-confirmar" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-95">
+                    Confirmar Agendamento
+                </button>
             </div>
         </div>
     </div>
 
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-3 flex justify-around items-center z-40">
+        <button onclick="showPage('disponiveis')" id="nav-disp" class="flex flex-col items-center text-blue-600">
+            <i class="fas fa-th-large text-xl"></i>
+            <span class="text-[10px] mt-1 font-bold uppercase">Disponíveis</span>
+        </button>
+        <button onclick="showPage('agenda')" id="nav-agen" class="flex flex-col items-center text-gray-400">
+            <i class="fas fa-calendar-check text-xl"></i>
+            <span class="text-[10px] mt-1 font-bold uppercase">Agenda</span>
+        </button>
+    </nav>
+
     <script>
-        // Lógica de navegação e Mock de dados (Substituir pelos fetchs do Google Script)
-        function showPage(pageId) {
-            document.getElementById('page-disponiveis').classList.toggle('hidden', pageId !== 'disponiveis');
-            document.getElementById('page-agenda').classList.toggle('hidden', pageId !== 'agenda');
+        const API_URL = "https://script.google.com/macros/s/AKfycbz0C-YYcFW-xnsPNSb65Ip69m5ZYXkqqM2QFtibPd3-_kUiE71lsgjrvKKxSXVZOM-Q/exec";
+        let servicoSelecionado = null;
+        let baseDadosFolha2 = [];
+
+        // Inicialização
+        window.onload = () => {
+            carregarDados();
+            popularHoras();
+        };
+
+        function showPage(page) {
+            document.getElementById('page-disponiveis').classList.toggle('hidden', page !== 'disponiveis');
+            document.getElementById('page-agenda').classList.toggle('hidden', page !== 'agenda');
+            
+            // Estilo dos ícones
+            document.getElementById('nav-disp').classList.toggle('text-blue-600', page === 'disponiveis');
+            document.getElementById('nav-disp').classList.toggle('text-gray-400', page !== 'disponiveis');
+            document.getElementById('nav-agen').classList.toggle('text-blue-600', page === 'agenda');
+            document.getElementById('nav-agen').classList.toggle('text-gray-400', page !== 'agenda');
+            
+            if(page === 'agenda') carregarAgenda();
         }
 
-        function openModal(idDoc) {
-            document.getElementById('modal').classList.remove('hidden');
-            // Popular as horas das 07h às 20h
+        async function carregarDados() {
+            const container = document.getElementById('lista-cards');
+            try {
+                const response = await fetch(`${API_URL}?action=getFolha1`);
+                const data = await response.json();
+                
+                container.innerHTML = data.map(item => `
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-md uppercase">${item.idDoc}</span>
+                            <span class="text-gray-400 text-xs"><i class="far fa-calendar-alt mr-1"></i>${item.dataTrabalho}</span>
+                        </div>
+                        <h4 class="font-bold text-slate-800 mb-1">${item.local}</h4>
+                        <p class="text-xs text-gray-500 mb-4 uppercase tracking-tighter">IE: ${item.idIE}</p>
+                        <button onclick='openModal(${JSON.stringify(item)})' class="w-full bg-slate-800 text-white text-sm font-semibold py-2 rounded-xl active:bg-blue-600">
+                            Programar Marcação
+                        </button>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = `<p class="text-red-500 text-center">Erro ao carregar dados. Verifique a API.</p>`;
+            }
+        }
+
+        function popularHoras() {
             const select = document.getElementById('input-hora');
-            select.innerHTML = '';
             for(let h=7; h<=20; h++) {
-                let hora = h < 10 ? '0'+h+':00' : h+':00';
+                let hora = h < 10 ? `0${h}:00` : `${h}:00`;
                 select.innerHTML += `<option value="${hora}">${hora}</option>`;
             }
+        }
+
+        function openModal(item) {
+            servicoSelecionado = item;
+            document.getElementById('modal-detalhes').innerHTML = `
+                <p><strong>Doc:</strong> ${item.idDoc}</p>
+                <p><strong>Local:</strong> ${item.local}</p>
+            `;
+            document.getElementById('modal').classList.remove('hidden');
         }
 
         function closeModal() {
             document.getElementById('modal').classList.add('hidden');
         }
 
-        // Exemplo de alerta de sobreposição
-        function confirmarAgendamento() {
-            const warning = confirm("Nota: Já existe uma carga neste horário. Deseja forçar a sobreposição?");
-            if(warning) {
-                alert("Agendado com sucesso!");
-                closeModal();
+        async function enviarMarcacao() {
+            const dataM = document.getElementById('input-data').value;
+            const horaM = document.getElementById('input-hora').value;
+
+            if(!dataM) return alert("Selecione uma data");
+
+            // Lógica de alerta de sobreposição (exemplo local)
+            const alerta = confirm(`Confirma marcação para ${dataM} às ${horaM}? \n(O sistema verificará sobreposições na Folha 2)`);
+            
+            if(alerta) {
+                const btn = document.getElementById('btn-confirmar');
+                btn.disabled = true;
+                btn.innerText = "A processar...";
+
+                const payload = {
+                    ...servicoSelecionado,
+                    dataMarcacao: dataM,
+                    horaMarcacao: horaM
+                };
+
+                try {
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors', // Necessário para Google Apps Script simples
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    alert("Pedido enviado! (Nota: O Google Sheets processará o registo em segundos)");
+                    closeModal();
+                    showPage('agenda');
+                } catch (e) {
+                    alert("Erro ao gravar. Tente novamente.");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = "Confirmar Agendamento";
+                }
+            }
+        }
+
+        async function carregarAgenda() {
+            const container = document.getElementById('lista-agenda');
+            container.innerHTML = '<div class="text-center p-10 text-gray-400 text-xs">A carregar cronograma...</div>';
+            
+            try {
+                const response = await fetch(`${API_URL}?action=getFolha2`);
+                const data = await response.json();
+                
+                if(data.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-400 mt-10">Nenhum serviço agendado.</p>';
+                    return;
+                }
+
+                container.innerHTML = data.map(item => `
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-l-4 border-l-emerald-400 flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-lg font-black text-slate-800">${item.horaMarcacao}</span>
+                                <span class="text-[10px] bg-emerald-50 text-emerald-700 px-2 rounded-full font-bold">${item.dataMarcacao}</span>
+                            </div>
+                            <p class="text-xs font-bold text-slate-700 uppercase">${item.local}</p>
+                            <p class="text-[10px] text-gray-400 uppercase">Doc: ${item.idDoc} | IE: ${item.idIE}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="text-gray-300 hover:text-blue-500 p-2"><i class="fas fa-edit"></i></button>
+                            <button class="text-gray-300 hover:text-red-500 p-2"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = `<p class="text-red-500 text-center">Erro ao carregar agenda.</p>`;
             }
         }
     </script>
