@@ -3,123 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logística Mobile</title>
+    <title>Logística v4</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/dist/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .aba-ativa { color: #2563eb; border-top: 3px solid #2563eb; font-weight: 900; }
-        input[type="date"] { color-scheme: light; }
+        .aba-ativa { color: #2563eb; border-bottom: 3px solid #2563eb; font-weight: 800; }
+        .card { transition: transform 0.2s; border: 1px solid #f1f5f9; }
+        .card:active { transform: scale(0.98); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen pb-24 font-sans">
+<body class="bg-slate-50 min-h-screen pb-24 font-sans text-slate-900">
 
     <header class="bg-white p-4 sticky top-0 z-50 shadow-sm border-b">
-        <div class="max-w-md mx-auto flex flex-col gap-3">
-            <h1 class="text-center text-slate-800 font-black text-lg tracking-tighter uppercase">Gestão de Cargas</h1>
-            <div class="flex items-center gap-2 bg-slate-100 p-2 rounded-2xl border border-slate-200">
-                <i class="fas fa-calendar-day text-slate-400 ml-2"></i>
-                <input type="date" id="filtro-data" class="bg-transparent text-sm w-full outline-none font-bold text-slate-600" onchange="renderizar()">
-                <button onclick="limparFiltro()" class="text-[10px] bg-white px-3 py-1.5 rounded-xl shadow-sm font-bold text-blue-600 active:scale-95">LIMPAR</button>
+        <div class="max-w-md mx-auto space-y-3">
+            <h1 class="text-center font-black text-lg tracking-tighter uppercase">Gestão de Cargas</h1>
+            <div class="flex items-center gap-2 bg-slate-100 p-2 rounded-2xl border">
+                <i class="fas fa-calendar-alt text-slate-400 ml-2"></i>
+                <input type="date" id="filtro-data" class="bg-transparent text-sm w-full outline-none font-bold" onchange="renderizar()">
+                <button onclick="limparFiltro()" class="text-[10px] bg-white px-3 py-2 rounded-xl shadow-sm font-bold text-blue-600">LIMPAR</button>
             </div>
         </div>
     </header>
 
     <main class="p-4 max-w-md mx-auto">
-        <div id="seccao-disponiveis">
-            <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Pendentes na Folha 1</h2>
-            <div id="lista-disponiveis" class="space-y-4">
-                <div class="text-center py-10 text-slate-300 italic">A carregar dados...</div>
-            </div>
+        <div id="view-disponiveis">
+            <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Disponíveis (Folha 1)</h2>
+            <div id="lista-disponiveis" class="space-y-4"></div>
         </div>
 
-        <div id="seccao-agenda" class="hidden">
-            <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Confirmados na Folha 2</h2>
+        <div id="view-agenda" class="hidden">
+            <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Confirmados (Folha 2)</h2>
             <div id="lista-agenda" class="space-y-3"></div>
         </div>
     </main>
 
-    <div id="modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center z-[100] p-4">
-        <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl">
-            <h3 id="modal-titulo" class="text-xl font-black text-slate-800 mb-2">Programar Carga</h3>
-            <div id="modal-info" class="mb-6 p-4 bg-blue-50 rounded-2xl text-[11px] text-blue-900 border border-blue-100"></div>
+    <div id="modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-[100] p-6">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl">
+            <h3 id="modal-titulo" class="text-xl font-black mb-4">Agendar Carga</h3>
+            <div id="modal-info" class="mb-6 p-4 bg-blue-50 rounded-2xl text-[11px] border border-blue-100 italic text-blue-800"></div>
             
             <div class="space-y-5">
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Data do Agendamento</label>
-                    <input type="date" id="data-agendar" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl outline-none font-bold">
+                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Data Marcação</label>
+                    <input type="date" id="input-data" class="w-full bg-slate-50 border p-4 rounded-2xl outline-none font-bold">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Janela Horária</label>
-                    <select id="hora-agendar" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl outline-none font-bold"></select>
+                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Hora</label>
+                    <select id="input-hora" class="w-full bg-slate-50 border p-4 rounded-2xl outline-none font-bold"></select>
                 </div>
-                <button onclick="salvarServico()" id="btn-finalizar" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg shadow-blue-200 active:scale-95 transition-all uppercase tracking-widest">Confirmar</button>
-                <button onclick="fecharModal()" class="w-full text-slate-400 text-[10px] font-black uppercase tracking-widest py-2">Voltar</button>
+                <button onclick="salvar()" id="btn-save" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg active:scale-95 uppercase">Confirmar</button>
+                <button onclick="fecharModal()" class="w-full text-slate-400 text-[10px] font-black uppercase py-2">Cancelar</button>
             </div>
         </div>
     </div>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center h-20 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
-        <button onclick="trocarAba('disponiveis')" id="nav-disponiveis" class="flex flex-col items-center gap-1 aba-ativa w-1/2">
-            <i class="fas fa-layer-group text-lg"></i><span class="text-[9px] font-black uppercase tracking-tighter">Disponíveis</span>
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center h-20 z-50 shadow-2xl">
+        <button onclick="mudarAba('disponiveis')" id="nav-disp" class="flex flex-col items-center gap-1 aba-ativa w-1/2">
+            <i class="fas fa-list-ul"></i><span class="text-[9px] font-black uppercase">Disponíveis</span>
         </button>
-        <button onclick="trocarAba('agenda')" id="nav-agenda" class="flex flex-col items-center gap-1 text-slate-300 w-1/2">
-            <i class="fas fa-calendar-check text-lg"></i><span class="text-[9px] font-black uppercase tracking-tighter">Agenda</span>
+        <button onclick="mudarAba('agenda')" id="nav-agen" class="flex flex-col items-center gap-1 text-slate-300 w-1/2">
+            <i class="fas fa-calendar-check"></i><span class="text-[9px] font-black uppercase">Agenda</span>
         </button>
     </nav>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwoljETktAAazbwY6U03H--EUTYkoPPXRz5loDA5MOD-BFZa8FJrkuKGRnnjj01Pc_6/exec";
-        let dbDisp = []; let dbAgen = [];
-        let objSelecionado = null; let isEdit = false;
+        const API = "https://script.google.com/macros/s/AKfycbxqJAjEj5xaOMBIa7NSq-ZU-zldVZafu5NUWaAKGhOxv1zH5dKaXDL0L74jrqgiw06d/exec"; // <--- COLA AQUI O NOVO URL
+        let dbD = []; let dbA = [];
+        let selObj = null; let editMode = false;
 
         window.onload = () => {
-            const selHora = document.getElementById('hora-agendar');
-            for(let h=7; h<=20; h++) {
-                let horaStr = (h < 10 ? '0'+h : h) + ':00';
-                selHora.innerHTML += `<option value="${horaStr}">${horaStr}</option>`;
+            const hSel = document.getElementById('input-hora');
+            for(let i=7; i<=20; i++) {
+                let hStr = (i < 10 ? '0'+i : i) + ':00';
+                hSel.innerHTML += `<option value="${hStr}">${hStr}</option>`;
             }
-            carregarDados();
+            carregar();
         };
 
-        async function carregarDados() {
+        async function carregar() {
             try {
                 const [r1, r2] = await Promise.all([
-                    fetch(`${API_URL}?action=getFolha1`).then(r => r.json()),
-                    fetch(`${API_URL}?action=getFolha2`).then(r => r.json())
+                    fetch(`${API}?action=getFolha1`).then(r => r.json()),
+                    fetch(`${API}?action=getFolha2`).then(r => r.json())
                 ]);
-                dbDisp = r1; dbAgen = r2;
+                dbD = r1; dbA = r2;
                 renderizar();
-            } catch (e) { alert("Erro de conexão com a Sheet."); }
+            } catch (e) { console.error(e); }
         }
 
         function renderizar() {
-            const dataFiltro = document.getElementById('filtro-data').value;
-            const dataFormatada = dataFiltro ? dataFiltro.split('-').reverse().join('/') : "";
+            const f = document.getElementById('filtro-data').value;
+            const dataF = f ? f.split('-').reverse().join('/') : "";
 
-            // Render Disponíveis
-            const fDisp = dataFormatada ? dbDisp.filter(i => i.dataTrabalho === dataFormatada) : dbDisp;
-            document.getElementById('lista-disponiveis').innerHTML = fDisp.map(i => `
-                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 relative overflow-hidden">
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-2 py-1 rounded-lg uppercase tracking-tighter">DOC: ${i.idDoc}</span>
-                        <span class="text-[10px] font-bold text-blue-500">${i.dataTrabalho}</span>
+            // Disponíveis
+            const filteredD = dataF ? dbD.filter(i => i.dataTrabalho === dataF) : dbD;
+            document.getElementById('lista-disponiveis').innerHTML = filteredD.map(i => `
+                <div class="bg-white rounded-3xl p-5 shadow-sm card">
+                    <div class="flex justify-between text-[9px] font-black text-slate-400 mb-2">
+                        <span>DOC: ${i.idDoc}</span><span>${i.dataTrabalho}</span>
                     </div>
-                    <h4 class="font-black text-slate-800 leading-snug mb-5 uppercase text-sm">${i.local}</h4>
-                    <button onclick='abrirModal(${JSON.stringify(i)}, false)' class="w-full bg-slate-800 text-white text-[10px] font-black py-3.5 rounded-xl uppercase tracking-widest active:bg-blue-600 transition-colors">Agendar Agora</button>
+                    <h4 class="font-bold text-slate-800 text-sm mb-4 leading-tight uppercase">${i.local}</h4>
+                    <button onclick='abrirModal(${JSON.stringify(i)}, false)' class="w-full bg-slate-900 text-white text-[10px] font-black py-3 rounded-xl uppercase">Agendar</button>
                 </div>
             `).join('');
 
-            // Render Agenda
-            const fAgen = dataFormatada ? dbAgen.filter(i => i.dataMarcacao === dataFormatada) : dbAgen;
-            fAgen.sort((a,b) => a.horaMarcacao.localeCompare(b.horaMarcacao));
-            document.getElementById('lista-agenda').innerHTML = fAgen.map(i => `
-                <div class="bg-white rounded-2xl p-4 shadow-sm border-l-[6px] border-emerald-500 flex justify-between items-center">
-                    <div class="flex-1">
+            // Agenda
+            const filteredA = dataF ? dbA.filter(i => i.dataMarcacao === dataF) : dbA;
+            filteredA.sort((a,b) => a.horaMarcacao.localeCompare(b.horaMarcacao));
+            document.getElementById('lista-agenda').innerHTML = filteredA.map(i => `
+                <div class="bg-white rounded-2xl p-4 shadow-sm border-l-4 border-emerald-500 flex justify-between items-center card">
+                    <div>
                         <div class="flex items-center gap-2 mb-0.5">
-                            <span class="text-xl font-black text-slate-800">${i.horaMarcacao}</span>
+                            <span class="text-lg font-black text-slate-800">${i.horaMarcacao}</span>
                             <span class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase">${i.dataMarcacao}</span>
                         </div>
-                        <p class="text-[10px] font-bold text-slate-500 leading-tight uppercase">${i.local}</p>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase leading-tight">${i.local}</p>
                     </div>
                     <div class="flex gap-1">
                         <button onclick='abrirModal(${JSON.stringify(i)}, true)' class="text-slate-300 hover:text-blue-500 p-2 text-lg"><i class="fas fa-edit"></i></button>
@@ -130,51 +128,59 @@
         }
 
         function abrirModal(item, editar) {
-            objSelecionado = item; isEdit = editar;
+            selObj = item; editMode = editar;
             document.getElementById('modal-titulo').innerText = editar ? "Editar Horário" : "Agendar Carga";
             document.getElementById('modal-info').innerHTML = `<strong>LOCAL:</strong> ${item.local}<br><strong>DOC:</strong> ${item.idDoc}`;
+            
+            // Pré-preencher campos se for edição
+            if (editar) {
+                const [d, m, a] = item.dataMarcacao.split('/');
+                document.getElementById('input-data').value = `${a}-${m}-${d}`;
+                document.getElementById('input-hora').value = item.horaMarcacao;
+            } else {
+                document.getElementById('input-data').value = "";
+            }
+            
             document.getElementById('modal').classList.remove('hidden');
         }
 
-        async function salvarServico() {
-            const d = document.getElementById('data-agendar').value;
-            const h = document.getElementById('hora-agendar').value;
-            if(!d) return alert("Por favor, selecione uma data.");
+        async function salvar() {
+            const dInput = document.getElementById('input-data').value;
+            const hInput = document.getElementById('input-hora').value;
+            if(!dInput) return alert("Data obrigatória.");
 
-            const dataPT = d.split('-').reverse().join('/');
-            const btn = document.getElementById('btn-finalizar');
-            btn.disabled = true; btn.innerText = "A PROCESSAR...";
+            const dataPT = dInput.split('-').reverse().join('/');
+            const btn = document.getElementById('btn-save');
+            btn.disabled = true; btn.innerText = "A GUARDAR...";
 
             const payload = {
-                action: isEdit ? 'edit' : 'create',
-                rowId: objSelecionado.rowId,
-                idDoc: objSelecionado.idDoc, idIE: objSelecionado.idIE, local: objSelecionado.local,
-                dataTrabalho: objSelecionado.dataTrabalho,
-                dataMarcacao: dataPT, horaMarcacao: h
+                action: editMode ? 'edit' : 'create',
+                rowId: selObj.rowId,
+                idDoc: selObj.idDoc, idIE: selObj.idIE, local: selObj.local,
+                dataTrabalho: selObj.dataTrabalho,
+                dataMarcacao: dataPT, horaMarcacao: hInput
             };
 
             try {
-                await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+                await fetch(API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
                 fecharModal();
-                setTimeout(carregarDados, 1500); // Dá tempo ao Google de atualizar
-                if(!isEdit) trocarAba('agenda');
-            } catch(e) { alert("Erro ao guardar."); }
+                setTimeout(carregar, 1500);
+                if(!editMode) mudarAba('agenda');
+            } catch(e) { alert("Erro ao ligar à Sheet."); }
             finally { btn.disabled = false; btn.innerText = "Confirmar"; }
         }
 
         async function apagar(id) {
-            if(!confirm("Deseja eliminar este agendamento?")) return;
-            await fetch(`${API_URL}?action=delete&rowId=${id}`);
-            carregarDados();
+            if(!confirm("Eliminar marcação?")) return;
+            await fetch(`${API}?action=delete&rowId=${id}`);
+            carregar();
         }
 
-        function trocarAba(aba) {
-            document.getElementById('seccao-disponiveis').classList.toggle('hidden', aba !== 'disponiveis');
-            document.getElementById('seccao-agenda').classList.toggle('hidden', aba !== 'agenda');
-            document.getElementById('nav-disponiveis').classList.toggle('aba-ativa', aba === 'disponiveis');
-            document.getElementById('nav-agenda').classList.toggle('aba-ativa', aba === 'agenda');
-            document.getElementById('nav-disponiveis').classList.toggle('text-slate-300', aba !== 'disponiveis');
-            document.getElementById('nav-agenda').classList.toggle('text-slate-300', aba !== 'agenda');
+        function mudarAba(aba) {
+            document.getElementById('view-disponiveis').classList.toggle('hidden', aba !== 'disponiveis');
+            document.getElementById('view-agenda').classList.toggle('hidden', aba !== 'agenda');
+            document.getElementById('nav-disp').classList.toggle('aba-ativa', aba === 'disponiveis');
+            document.getElementById('nav-agen').classList.toggle('aba-ativa', aba === 'agenda');
         }
 
         function fecharModal() { document.getElementById('modal').classList.add('hidden'); }
