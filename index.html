@@ -3,160 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Logística</title>
+    <title>Gestão de Cargas</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .detail-grid { display: none; }
-        .expanded .detail-grid { display: grid; }
-        .expanded .chevron { transform: rotate(180deg); }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/dist/css/all.min.css">
 </head>
-<body class="bg-slate-50 min-h-screen p-4 md:p-8 text-slate-900">
+<body class="bg-gray-50 min-h-screen font-sans">
 
-    <div class="max-w-5xl mx-auto">
-        <header class="mb-10">
-            <h1 class="text-3xl font-black tracking-tighter mb-6">Controlo de Pesagens</h1>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-6 rounded-3xl shadow-xl border border-slate-200">
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">Data Trabalho</label>
-                    <input type="date" id="filterDate" class="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none border font-semibold text-sm">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">Transportador</label>
-                    <input type="text" id="filterTransp" placeholder="Nome do transportador..." class="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none border font-semibold text-sm">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">N.º Documento</label>
-                    <input type="text" id="filterDoc" placeholder="Número doc..." class="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none border font-semibold text-sm">
-                </div>
+    <nav class="bg-blue-600 text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="flex justify-around max-w-md mx-auto">
+            <button onclick="showPage('disponiveis')" class="flex flex-col items-center">
+                <i class="fas fa-list"></i><span class="text-xs">Disponíveis</span>
+            </button>
+            <button onclick="showPage('agenda')" class="flex flex-col items-center">
+                <i class="fas fa-calendar-alt"></i><span class="text-xs">Agenda</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="p-4 max-w-md mx-auto pb-20">
+        
+        <section id="page-disponiveis">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Serviços por Processar</h2>
+            <div id="lista-cards" class="space-y-4">
+                <div class="animate-pulse bg-gray-200 h-32 rounded-xl"></div>
             </div>
-        </header>
+        </section>
 
-        <div id="loading" class="text-center py-20 text-slate-400 font-medium animate-pulse">A carregar dados do sistema...</div>
-        <div id="container" class="space-y-4"></div>
+        <section id="page-agenda" class="hidden">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Cargas Agendadas</h2>
+            <div id="lista-agenda" class="space-y-3"></div>
+        </section>
+    </main>
+
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-[60]">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <h3 class="text-lg font-bold mb-4 text-blue-600">Programar Marcação</h3>
+            <label class="block text-sm mb-1">Data</label>
+            <input type="date" id="input-data" class="w-full border p-2 rounded mb-3">
+            <label class="block text-sm mb-1">Hora (07:00 - 20:00)</label>
+            <select id="input-hora" class="w-full border p-2 rounded mb-4">
+                </select>
+            <div class="flex gap-2">
+                <button onclick="closeModal()" class="flex-1 py-2 bg-gray-200 rounded-lg">Cancelar</button>
+                <button onclick="confirmarAgendamento()" class="flex-1 py-2 bg-blue-600 text-white rounded-lg">Confirmar</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // --- SUBSTITUIR PELO TEU URL DO APPS SCRIPT ---
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxddOUfV3vKEEC6bwV12p-685zN9vMAVnTiZ6QNcP2w6zxkvMQKsKDy0phheBLCct1S/exec';
-        
-        let allData = [];
-
-        // Trata data americana/ISO para DD/Mes (Portugal)
-        function formatarDataPT(str) {
-            if (!str) return '---';
-            const d = new Date(str);
-            if (isNaN(d)) return str;
-            const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-            return `${d.getDate().toString().padStart(2, '0')}/${meses[d.getMonth()]}`;
+        // Lógica de navegação e Mock de dados (Substituir pelos fetchs do Google Script)
+        function showPage(pageId) {
+            document.getElementById('page-disponiveis').classList.toggle('hidden', pageId !== 'disponiveis');
+            document.getElementById('page-agenda').classList.toggle('hidden', pageId !== 'agenda');
         }
 
-        // Trata horas estranhas (AM/PM ou durações do Sheets)
-        function formatarHoraPT(str) {
-            if (!str || str === "") return '---';
-            let s = str.trim().toUpperCase();
-            
-            // Se tiver AM/PM, converte para 24h
-            if (s.includes('AM') || s.includes('PM')) {
-                const parts = s.match(/(\d+):(\d+)(?::\d+)?\s*(AM|PM)/);
-                if (parts) {
-                    let h = parseInt(parts[1]);
-                    const m = parts[2];
-                    if (parts[3] === 'PM' && h < 12) h += 12;
-                    if (parts[3] === 'AM' && h === 12) h = 0;
-                    return `${h.toString().padStart(2, '0')}:${m}`;
-                }
-            }
-            // Se for HH:MM:SS, corta os segundos
-            return s.split(':').slice(0, 2).join(':').padStart(5, '0').substring(0, 5);
-        }
-
-        async function fetchData() {
-            try {
-                const response = await fetch(API_URL);
-                allData = await response.json();
-                renderData(allData);
-                document.getElementById('loading').style.display = 'none';
-            } catch (error) {
-                document.getElementById('loading').innerHTML = `<p class="text-red-500 font-bold text-lg">Erro na ligação à base de dados!</p>`;
+        function openModal(idDoc) {
+            document.getElementById('modal').classList.remove('hidden');
+            // Popular as horas das 07h às 20h
+            const select = document.getElementById('input-hora');
+            select.innerHTML = '';
+            for(let h=7; h<=20; h++) {
+                let hora = h < 10 ? '0'+h+':00' : h+':00';
+                select.innerHTML += `<option value="${hora}">${hora}</option>`;
             }
         }
 
-        function renderData(data) {
-            const container = document.getElementById('container');
-            container.innerHTML = '';
-
-            // Ordenação por Data (Mais recente primeiro)
-            const sorted = data.sort((a, b) => new Date(b['Data Trabalho']) - new Date(a['Data Trabalho']));
-
-            sorted.forEach(item => {
-                const card = document.createElement('div');
-                card.className = "bg-white rounded-3xl border border-slate-200 overflow-hidden cursor-pointer hover:border-blue-500 hover:shadow-2xl transition-all duration-300";
-                card.onclick = () => card.classList.toggle('expanded');
-                
-                card.innerHTML = `
-                    <div class="p-6 flex flex-col md:flex-row justify-between gap-4 items-center">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                                <span class="bg-slate-100 px-2 py-0.5 rounded text-slate-600">ID: ${item['N.º']}</span>
-                                <span>DOC: ${item['N.º Documento Externo']}</span>
-                            </div>
-                            <div class="font-black text-slate-800 text-lg uppercase leading-tight">${item['Nome Local Entidade']}</div>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-4 text-sm font-bold">
-                            <div class="text-slate-500">${formatarDataPT(item['Data Trabalho'])}</div>
-                            <div class="text-blue-600">${item['Lista Talões Pesagem.Nome Transporador']}</div>
-                            <div class="bg-blue-600 text-white px-4 py-2 rounded-2xl flex items-center gap-2 shadow-lg shadow-blue-100">
-                                <span class="text-[9px] opacity-70 uppercase tracking-widest">Chegada</span>
-                                ${formatarHoraPT(item['Lista Talões Pesagem.Hora Chegada'])}
-                                <svg class="chevron w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="detail-grid p-8 bg-slate-50 border-t border-slate-100 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                        ${createDetail("Viatura", item['Lista Talões Pesagem.Matricula Veiculo'])}
-                        ${createDetail("Reboque", item['Lista Talões Pesagem.Matricula Reboque'])}
-                        ${createDetail("Aut. Entrada", formatarHoraPT(item['Lista Talões Pesagem.Hora Autorização Entrada']))}
-                        ${createDetail("Pesagem Ent.", formatarHoraPT(item['Lista Talões Pesagem.Hora Pesagem Entrada']))}
-                        ${createDetail("Pesagem Saída", formatarHoraPT(item['Lista Talões Pesagem.Hora Pesagem Saída']))}
-                        ${createDetail("Hora Partida", formatarHoraPT(item['Lista Talões Pesagem.Hora Partida']))}
-                    </div>
-                `;
-                container.appendChild(card);
-            });
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
         }
 
-        function createDetail(label, val) {
-            return `<div><p class="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-1">${label}</p><p class="text-sm font-bold text-slate-800">${val || '---'}</p></div>`;
+        // Exemplo de alerta de sobreposição
+        function confirmarAgendamento() {
+            const warning = confirm("Nota: Já existe uma carga neste horário. Deseja forçar a sobreposição?");
+            if(warning) {
+                alert("Agendado com sucesso!");
+                closeModal();
+            }
         }
-
-        const runFilters = () => {
-            const dateVal = document.getElementById('filterDate').value; // YYYY-MM-DD
-            const transpVal = document.getElementById('filterTransp').value.toLowerCase();
-            const docVal = document.getElementById('filterDoc').value.toLowerCase();
-
-            const filtered = allData.filter(i => {
-                // Normaliza a data do Sheets para comparar com o seletor HTML
-                const dObj = new Date(i['Data Trabalho']);
-                const dStr = dObj.getFullYear() + '-' + String(dObj.getMonth()+1).padStart(2,'0') + '-' + String(dObj.getDate()).padStart(2,'0');
-                
-                const mDate = dateVal ? dStr === dateVal : true;
-                const mTrans = transpVal ? i['Lista Talões Pesagem.Nome Transporador'].toLowerCase().includes(transpVal) : true;
-                const mDoc = docVal ? String(i['N.º Documento Externo']).toLowerCase().includes(docV) : true;
-                
-                return mDate && mTrans && mDoc;
-            });
-            renderData(filtered);
-        };
-
-        ['filterDate', 'filterTransp', 'filterDoc'].forEach(id => {
-            document.getElementById(id).addEventListener('input', runFilters);
-        });
-
-        fetchData();
     </script>
 </body>
 </html>
